@@ -428,8 +428,8 @@ const CTFChallengePlatform = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 relative overflow-hidden">
-      {/* Matrix Rain Background */}
-      <div className="absolute inset-0 opacity-10">
+     {/* Matrix Rain Background */}
+      {/* <div className="absolute inset-0 opacity-10">
         {matrixRain.map((drop, i) => (
           <div
             key={i}
@@ -439,7 +439,7 @@ const CTFChallengePlatform = () => {
             {drop.char}
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Header */}
       <div className="relative z-10 bg-slate-900 border-b border-cyan-500/30 px-6 py-4">
