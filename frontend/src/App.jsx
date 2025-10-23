@@ -542,7 +542,7 @@ const CTFChallengePlatform = () => {
             </div>
           </div>
 
-          {/* Challenge Rooms */}
+          
           <div className="grid gap-6">
             {rooms.map(room => (
               <RoomCard key={room.id} room={room} />
