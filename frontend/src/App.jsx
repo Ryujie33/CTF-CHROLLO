@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Terminal, Flag, CheckCircle, XCircle, Lock, Server, Wifi, Clock, PlayCircle, StopCircle } from 'lucide-react';
 
-/**
- * FIX 1: High-performance Matrix Canvas
- * This component handles the matrix rain effect using <canvas>
- * and requestAnimationFrame. This is very fast and, most importantly,
- * it DOES NOT cause any React re-renders, fixing the
- * "unresponsive buttons" issue.
- */
+
 const MatrixCanvas = () => {
   const canvasRef = useRef(null);
 
@@ -24,12 +18,12 @@ const MatrixCanvas = () => {
     let drops = [];
 
     const setupCanvas = () => {
-      // Set canvas to full window size
+      
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       
       columns = Math.floor(canvas.width / fontSize);
-      drops = []; // Reset drops array
+      drops = []; 
       for(let i = 0; i < columns; i++) {
         drops[i] = 1;
       }
@@ -38,18 +32,18 @@ const MatrixCanvas = () => {
     setupCanvas();
 
     const draw = () => {
-      // Semi-transparent black background for the fading effect
+      
       ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = '#0F0'; // Green text
+      ctx.fillStyle = '#0F0'; 
       ctx.font = `${fontSize}px monospace`;
 
       for (let i = 0; i < drops.length; i++) {
         const text = chars[Math.floor(Math.random() * chars.length)];
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);
 
-        // Reset drop to top randomly
+        
         if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
           drops[i] = 0;
         }
@@ -61,33 +55,27 @@ const MatrixCanvas = () => {
       draw();
       animationFrameId = window.requestAnimationFrame(animate);
     };
-    animate(); // Start the animation
+    animate(); 
 
-    // Redraw canvas on window resize
+    
     window.addEventListener('resize', setupCanvas);
 
-    // Cleanup function to stop animation and remove listener
+    
     return () => {
       window.cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', setupCanvas);
     };
-  }, []); // Empty dependency array ensures this runs only once
-
+  }, []); 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 opacity-10" // Original styling
+      className="absolute inset-0 opacity-10" 
     />
   );
 };
 
 
-/**
- * FIX 2: External RoomCard Component
- * By moving RoomCard *outside* of CTFChallengePlatform, it is
- * no longer re-created every second when the timer ticks.
- * This fixes the "clearing input" problem.
- */
+
 const RoomCard = ({ 
   room, 
   submission, 
@@ -101,7 +89,7 @@ const RoomCard = ({
   canStartRoom 
 }) => {
   
-  // This component now has its *own* state for the input field.
+  
   const [flagInput, setFlagInput] = useState('');
 
   const isCompleted = submission?.correct;
@@ -140,7 +128,7 @@ const RoomCard = ({
         </div>
       </div>
 
-      {/* Timer Display */}
+      
       {isActive && (
         <div className="mb-4 bg-slate-900 p-4 rounded border-l-4 border-cyan-500">
           <div className="flex items-center justify-between">
@@ -157,7 +145,7 @@ const RoomCard = ({
         </div>
       )}
 
-      {/* Completed Info */}
+      
       {isCompleted && (
         <div className="mb-4 bg-green-500/10 p-4 rounded border-l-4 border-green-500">
           <div className="flex items-center justify-between">
@@ -189,7 +177,7 @@ const RoomCard = ({
             ))}
           </div>
           
-          {/* This is now a "controlled input" tied to this component's state */}
+          
           <input
             type="text"
             placeholder="Enter flag (e.g., CTF{...})"
@@ -199,7 +187,7 @@ const RoomCard = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter' && flagInput.trim()) {
                 handleSubmitFlag(room.id, flagInput.trim());
-                setFlagInput(''); // Clear this component's state
+                setFlagInput(''); 
               }
             }}
           />
@@ -214,7 +202,7 @@ const RoomCard = ({
           <div className="flex gap-2">
             <button
               onClick={() => {
-                // Using a custom modal/confirm is better, but window.confirm is OK for now
+               
                 if (window.confirm('Are you sure you want to terminate this session? Your timer will stop.')) {
                   terminateRoom(room.id);
                   setSelectedRoom(null);
@@ -275,7 +263,7 @@ const CTFChallengePlatform = () => {
     username: 'ctf_player'
   });
 
-  // Challenge rooms with flags
+
   const rooms = [
     {
       id: 'lucien',
@@ -284,7 +272,7 @@ const CTFChallengePlatform = () => {
       difficulty: 'Easy',
       points: 100,
       flag: 'CTF{d34th_15_n0t_th3_3nd}',
-      timeLimit: 3600, // 1 hour in seconds
+      timeLimit: 3600, 
       hints: [
         'Look in the dreams directory',
         'The sandman leaves traces in .hidden files',
@@ -324,10 +312,7 @@ const CTFChallengePlatform = () => {
     }
   ];
 
-  // --- CRASH FIX ---
-  // The 'matrixRain' state and its useEffect have been REMOVED.
-  // The crash was caused by calling setMatrixRain without defining it.
-  // We are now using the <MatrixCanvas /> component instead.
+ 
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -336,12 +321,7 @@ const CTFChallengePlatform = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  /**
-   * FIX 3: Timer Stability
-   * We wrap terminateRoom in useCallback so its identity is stable.
-   * This prevents the timer's useEffect from re-running unnecessarily
-   * and ensures it doesn't use "stale" state.
-   */
+  
   const terminateRoom = useCallback((roomId, timeUp = false) => {
     setRoomTimers(prevTimers => ({
       ...prevTimers,
@@ -360,16 +340,15 @@ const CTFChallengePlatform = () => {
     
     if (timeUp) {
       const room = rooms.find(r => r.id === roomId);
-      // Note: Replaced alert() with console.warn() as alert() is problematic
+      
       console.warn(`Time's up for ${room?.name}! The session has been terminated.`);
     }
-  }, [rooms]); // This function only depends on 'rooms', which never changes.
+  }, [rooms]); 
 
-
-  // Timer countdown effect
+  
   useEffect(() => {
     const interval = setInterval(() => {
-      // Use functional update form to avoid stale state
+      
       setRoomTimers(prev => {
         const updated = { ...prev };
         let roomToTerminate = null;
@@ -378,15 +357,15 @@ const CTFChallengePlatform = () => {
           if (updated[roomId]?.isActive && updated[roomId]?.timeRemaining > 0) {
             updated[roomId].timeRemaining -= 1;
             
-            // Time's up
+            
             if (updated[roomId].timeRemaining === 0) {
               updated[roomId].isActive = false;
-              roomToTerminate = roomId; // Mark room for termination
+              roomToTerminate = roomId; 
             }
           }
         });
 
-        // Call terminateRoom *outside* the loop and *after* state is updated
+        
         if (roomToTerminate) {
           terminateRoom(roomToTerminate, true);
         }
@@ -396,15 +375,15 @@ const CTFChallengePlatform = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [terminateRoom]); // Now this useEffect correctly depends on terminateRoom
+  }, [terminateRoom]); 
 
 
   const startRoom = (roomId) => {
     const room = rooms.find(r => r.id === roomId);
     
-    // Check if another room is active
+    
     if (activeRoom && activeRoom !== roomId) {
-      // Note: Replaced alert()
+      
       console.warn('Please complete or terminate the current room before starting a new one!');
       return;
     }
@@ -452,7 +431,7 @@ const CTFChallengePlatform = () => {
           }
         }));
 
-        // Use functional update for score
+        
         if (!submissions[roomId]?.correct) {
           setScore(prevScore => prevScore + room.points);
         }
@@ -460,7 +439,7 @@ const CTFChallengePlatform = () => {
         setSelectedRoom(null);
         
         setTimeout(() => {
-          // Note: Replaced alert()
+          
           console.log(`🎉 Correct! Flag captured!\n\nRoom terminated. You can now proceed to the next room.`);
         }, 100);
       } else {
@@ -475,7 +454,7 @@ const CTFChallengePlatform = () => {
         }));
       }
     } catch (error) {
-      // Fallback to client-side verification if backend is down
+      
       const isCorrect = flag.trim() === room.flag;
       
       if (isCorrect) {
@@ -501,7 +480,7 @@ const CTFChallengePlatform = () => {
         setSelectedRoom(null);
         
         setTimeout(() => {
-          // Note: Replaced alert()
+          
           console.log(`🎉 Correct! Flag captured!\n\nRoom terminated. You can now proceed to the next room.`);
         }, 100);
       } else {
@@ -519,11 +498,11 @@ const CTFChallengePlatform = () => {
   };
 
   const copyToClipboard = (text) => {
-    // A more robust way to copy, especially in iFrames
+    
     try {
       const textArea = document.createElement('textarea');
       textArea.value = text;
-      // Make it invisible
+      
       textArea.style.position = 'fixed';
       textArea.style.top = '-9999px';
       textArea.style.left = '-9999px';
@@ -538,31 +517,30 @@ const CTFChallengePlatform = () => {
   };
 
   const canStartRoom = (roomId) => {
-    // Can't start if another room is active
+    
     if (activeRoom && activeRoom !== roomId) {
       return false;
     }
-    // Can't start if already completed
+    
     if (submissions[roomId]?.correct) {
       return false;
     }
-    // Can't start if time ran out
+    
     if (roomTimers[roomId] && roomTimers[roomId].timeRemaining === 0 && !roomTimers[roomId].isActive) {
       return false;
     }
     return true;
   };
 
-  // --- RoomCard definition is now GONE from inside here ---
+  
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 relative overflow-hidden">
       
-      {/* --- RENDER FIX --- */}
-      {/* We now render the performant <MatrixCanvas /> component */}
+      
       <MatrixCanvas />
 
-      {/* Header */}
+      
       <div className="relative z-10 bg-slate-900 border-b border-cyan-500/30 px-6 py-4">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
@@ -591,10 +569,10 @@ const CTFChallengePlatform = () => {
         </div>
       </div>
 
-      {/* Main Content */}
+      
       <div className="relative z-10 p-6">
         <div className="max-w-6xl mx-auto">
-          {/* Fun Message Banner */}
+          
           <div className="mb-8 bg-gradient-to-r from-cyan-900/50 to-purple-900/50 border-2 border-cyan-500 rounded-lg p-8 text-center">
             <div className="mb-4">
               <h2 className="text-5xl font-bold text-cyan-400 mb-2 animate-pulse">
@@ -605,7 +583,7 @@ const CTFChallengePlatform = () => {
               </p>
             </div>
 
-            {/* Connection Information */}
+            
             <div className="mt-6 bg-slate-900 rounded-lg p-6 max-w-2xl mx-auto">
               <div className="flex items-center gap-2 mb-4">
                 <Server className="text-cyan-400" size={24} />
@@ -649,7 +627,7 @@ const CTFChallengePlatform = () => {
             </div>
           </div>
 
-          {/* Task Description */}
+          
           <div className="mb-8">
             <h2 className="text-3xl font-bold mb-2">Task 1 - Recover the Kingdom!</h2>
             <p className="text-slate-400 mb-4">
@@ -665,8 +643,7 @@ const CTFChallengePlatform = () => {
 
           
           <div className="grid gap-6">
-            {/* --- RENDER FIX --- */}
-            {/* We now pass all the props to the external RoomCard component */}
+            
             {rooms.map(room => (
               <RoomCard 
                 key={room.id} 
