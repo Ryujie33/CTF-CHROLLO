@@ -1,247 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Terminal, Flag, CheckCircle, XCircle, Lock, Server, Wifi, Clock, PlayCircle, StopCircle } from 'lucide-react';
-
-const MatrixCanvas = () => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    let animationFrameId;
-
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()';
-    const fontSize = 16;
-    let columns = 0;
-    let drops = [];
-
-    const setupCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      
-      columns = Math.floor(canvas.width / fontSize);
-      drops = []; // Reset drops array
-      for(let i = 0; i < columns; i++) {
-        drops[i] = 1;
-      }
-    };
-    
-    setupCanvas();
-
-    const draw = () => {
-      // Semi-transparent black background for the fading effect
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = '#0F0'; // Green text
-      ctx.font = `${fontSize}px monospace`;
-
-      for (let i = 0; i < drops.length; i++) {
-        const text = chars[Math.floor(Math.random() * chars.length)];
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-        // Reset drop to top randomly
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-          drops[i] = 0;
-        }
-        drops[i]++;
-      }
-    };
-
-    const animate = () => {
-      draw();
-      animationFrameId = window.requestAnimationFrame(animate);
-    };
-    animate(); // Start the animation
-
-    window.addEventListener('resize', setupCanvas);
-
-    // Cleanup
-    return () => {
-      window.cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', setupCanvas);
-    };
-  }, []); // Empty dependency array ensures this runs only once
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 opacity-10" // Kept your original styling
-    />
-  );
-};
-
-const RoomCard = ({ 
-  room, 
-  submission, 
-  timer, 
-  formatTime, 
-  selectedRoom, 
-  setSelectedRoom, 
-  handleSubmitFlag, 
-  terminateRoom, 
-  startRoom, 
-  canStartRoom 
-}) => {
-const [flagInput, setFlagInput] = useState('');
-const isCompleted = submission?.correct;
-  const isActive = timer?.isActive;
-  const timeUp = timer && timer.timeRemaining === 0 && !timer.isActive;
-
-  return (
-    <div className={`bg-slate-800 border rounded-lg p-6 transition-all ${
-      isActive ? 'border-cyan-500 shadow-lg shadow-cyan-500/20' : 'border-slate-700'
-    } ${timeUp ? 'opacity-60' : ''}`}>
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          {isCompleted ? (
-            <CheckCircle className="text-green-500" size={24} />
-          ) : timeUp ? (
-            <XCircle className="text-red-500" size={24} />
-          ) : isActive ? (
-            <PlayCircle className="text-cyan-400 animate-pulse" size={24} />
-          ) : (
-            <Lock className="text-slate-500" size={24} />
-          )}
-          <div>
-            <h3 className="text-xl font-bold text-cyan-400">{room.name}</h3>
-            <p className="text-slate-400 text-sm">{room.description}</p>
-          </div>
-        </div>
-        <div className="text-right">
-          <span className={`px-3 py-1 rounded text-xs font-semibold ${
-            room.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400' :
-            room.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
-            'bg-red-500/20 text-red-400'
-          }`}>
-            {room.difficulty}
-          </span>
-          <p className="text-slate-400 text-sm mt-2">{room.points} pts</p>
-        </div>
-      </div>
-
-      {/* Timer Display */}
-      {isActive && (
-        <div className="mb-4 bg-slate-900 p-4 rounded border-l-4 border-cyan-500">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock className="text-cyan-400" size={20} />
-              <span className="text-slate-300 font-semibold">Time Remaining:</span>
-            </div>
-            <span className={`text-2xl font-mono font-bold ${
-              timer?.timeRemaining < 300 ? 'text-red-400 animate-pulse' : 'text-cyan-400'
-            }`}>
-            {/* --- CHANGED --- Added check for timer existence */}
-              {timer ? formatTime(timer.timeRemaining) : '...'} 
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Completed Info */}
-      {isCompleted && (
-        <div className="mb-4 bg-green-500/10 p-4 rounded border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <span className="text-green-400 font-semibold">✓ Completed</span>
-            <span className="text-slate-300 text-sm">
-              Time: {formatTime(submission.timeSpent)}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Time Up Info */}
-      {timeUp && (
-        <div className="mb-4 bg-red-500/10 p-4 rounded border-l-4 border-red-500">
-          <span className="text-red-400 font-semibold">⏰ Time's Up - Session Terminated</span>
-        </div>
-      )}
-
-      <div className="mb-4 bg-slate-900 p-3 rounded border-l-4 border-cyan-500">
-        <p className="text-slate-300 font-semibold">{room.question}</p>
-      </div>
-
-      {selectedRoom === room.id && isActive ? (
-        <div className="mt-4 space-y-3">
-          <div className="bg-slate-900 p-4 rounded">
-            <h4 className="text-cyan-400 font-semibold mb-2">Hints:</h4>
-            {room.hints.map((hint, idx) => (
-              <p key={idx} className="text-slate-300 text-sm mb-1">• {hint}</p>
-            ))}
-          </div>
-          
-
-          <input
-            type="text"
-            placeholder="Enter flag (e.g., CTF{...})"
-            className="w-full bg-slate-900 border border-slate-700 rounded px-4 py-2 text-slate-200 focus:border-cyan-500 focus:outline-none"
-            value={flagInput}
-            onChange={(e) => setFlagInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && flagInput.trim()) {
-                handleSubmitFlag(room.id, flagInput.trim());
-                setFlagInput(''); // Clear the state, not the target's value
-              }
-            }}
-          />
-
-          {submission && !submission.correct && (
-            <div className="flex items-center gap-2 p-3 rounded bg-red-500/20 text-red-400">
-              <XCircle size={20} />
-              <span className="font-semibold">Incorrect flag. Try again.</span>
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                if (confirm('Are you sure you want to terminate this session? Your timer will stop.')) {
-                  terminateRoom(room.id);
-                  setSelectedRoom(null);
-                }
-              }}
-              className="flex-1 bg-red-600 hover:bg-red-500 text-white font-semibold py-2 rounded transition-colors flex items-center justify-center gap-2"
-            >
-              <StopCircle size={18} />
-              Terminate Session
-            </button>
-            <button
-              onClick={() => setSelectedRoom(null)}
-              className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2 rounded transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          onClick={() => {
-            if (!isActive && canStartRoom(room.id)) {
-              startRoom(room.id);
-            } else if (isActive) {
-              setSelectedRoom(room.id);
-      _      }
-          }}
-          className={`w-full font-semibold py-2 rounded transition-colors mt-4 ${
-            isCompleted ? 'bg-green-600 cursor-not-allowed' :
-            timeUp ? 'bg-red-600 cursor-not-allowed' :
-            !canStartRoom(room.id) ? 'bg-slate-600 cursor-not-allowed' :
-            isActive ? 'bg-cyan-600 hover:bg-cyan-500 text-white' :
-            'bg-cyan-600 hover:bg-cyan-500 text-white'
-          }`}
-          disabled={isCompleted || timeUp || (!isActive && !canStartRoom(room.id))}
-        >
-          {isCompleted ? '✓ Completed' :
-           timeUp ? '⏰ Time Expired' :
-           !canStartRoom(room.id) ? '🔒 Complete Current Room First' :
-           isActive ? 'Continue Room' :
-           'Start Machine'}
-        </button>
-      )}
-    </div>
-  );
-};
 
 const CTFChallengePlatform = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -304,6 +63,29 @@ const CTFChallengePlatform = () => {
     }
   ];
 
+  // Matrix rain effect
+  useEffect(() => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()';
+    const columns = Math.floor(window.innerWidth / 20);
+    const drops = Array(columns).fill(1);
+
+    const interval = setInterval(() => {
+      setMatrixRain(drops.map((y, i) => ({
+        x: i * 20,
+        y: y * 20,
+        char: chars[Math.floor(Math.random() * chars.length)]
+      })));
+
+      drops.forEach((y, i) => {
+        if (y * 20 > window.innerHeight && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      });
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Timer countdown effect
   useEffect(() => {
@@ -317,9 +99,7 @@ const CTFChallengePlatform = () => {
             // Time's up
             if (updated[roomId].timeRemaining === 0) {
               updated[roomId].isActive = false;
-              if (terminateRoom) {
               terminateRoom(roomId, true);
-              }
             }
           }
         });
@@ -489,10 +269,177 @@ const CTFChallengePlatform = () => {
     return true;
   };
 
+  const RoomCard = ({ room }) => {
+    const submission = submissions[room.id];
+    const timer = roomTimers[room.id];
+    const isCompleted = submission?.correct;
+    const isActive = timer?.isActive;
+    const timeUp = timer && timer.timeRemaining === 0 && !timer.isActive;
+
+    return (
+      <div className={`bg-slate-800 border rounded-lg p-6 transition-all ${
+        isActive ? 'border-cyan-500 shadow-lg shadow-cyan-500/20' : 'border-slate-700'
+      } ${timeUp ? 'opacity-60' : ''}`}>
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            {isCompleted ? (
+              <CheckCircle className="text-green-500" size={24} />
+            ) : timeUp ? (
+              <XCircle className="text-red-500" size={24} />
+            ) : isActive ? (
+              <PlayCircle className="text-cyan-400 animate-pulse" size={24} />
+            ) : (
+              <Lock className="text-slate-500" size={24} />
+            )}
+            <div>
+              <h3 className="text-xl font-bold text-cyan-400">{room.name}</h3>
+              <p className="text-slate-400 text-sm">{room.description}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className={`px-3 py-1 rounded text-xs font-semibold ${
+              room.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400' :
+              room.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
+              'bg-red-500/20 text-red-400'
+            }`}>
+              {room.difficulty}
+            </span>
+            <p className="text-slate-400 text-sm mt-2">{room.points} pts</p>
+          </div>
+        </div>
+
+        {/* Timer Display */}
+        {isActive && (
+          <div className="mb-4 bg-slate-900 p-4 rounded border-l-4 border-cyan-500">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="text-cyan-400" size={20} />
+                <span className="text-slate-300 font-semibold">Time Remaining:</span>
+              </div>
+              <span className={`text-2xl font-mono font-bold ${
+                timer.timeRemaining < 300 ? 'text-red-400 animate-pulse' : 'text-cyan-400'
+              }`}>
+                {formatTime(timer.timeRemaining)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Completed Info */}
+        {isCompleted && (
+          <div className="mb-4 bg-green-500/10 p-4 rounded border-l-4 border-green-500">
+            <div className="flex items-center justify-between">
+              <span className="text-green-400 font-semibold">✓ Completed</span>
+              <span className="text-slate-300 text-sm">
+                Time: {formatTime(submission.timeSpent)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Time Up Info */}
+        {timeUp && (
+          <div className="mb-4 bg-red-500/10 p-4 rounded border-l-4 border-red-500">
+            <span className="text-red-400 font-semibold">⏰ Time's Up - Session Terminated</span>
+          </div>
+        )}
+
+        <div className="mb-4 bg-slate-900 p-3 rounded border-l-4 border-cyan-500">
+          <p className="text-slate-300 font-semibold">{room.question}</p>
+        </div>
+
+        {selectedRoom === room.id && isActive ? (
+          <div className="mt-4 space-y-3">
+            <div className="bg-slate-900 p-4 rounded">
+              <h4 className="text-cyan-400 font-semibold mb-2">Hints:</h4>
+              {room.hints.map((hint, idx) => (
+                <p key={idx} className="text-slate-300 text-sm mb-1">• {hint}</p>
+              ))}
+            </div>
+            
+            <input
+              type="text"
+              placeholder="Enter flag (e.g., CTF{...})"
+              className="w-full bg-slate-900 border border-slate-700 rounded px-4 py-2 text-slate-200 focus:border-cyan-500 focus:outline-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                  handleSubmitFlag(room.id, e.target.value);
+                  e.target.value = '';
+                }
+              }}
+            />
+
+            {submission && !submission.correct && (
+              <div className="flex items-center gap-2 p-3 rounded bg-red-500/20 text-red-400">
+                <XCircle size={20} />
+                <span className="font-semibold">Incorrect flag. Try again.</span>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (confirm('Are you sure you want to terminate this session? Your timer will stop.')) {
+                    terminateRoom(room.id);
+                    setSelectedRoom(null);
+                  }
+                }}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white font-semibold py-2 rounded transition-colors flex items-center justify-center gap-2"
+              >
+                <StopCircle size={18} />
+                Terminate Session
+              </button>
+              <button
+                onClick={() => setSelectedRoom(null)}
+                className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2 rounded transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              if (!isActive && canStartRoom(room.id)) {
+                startRoom(room.id);
+              } else if (isActive) {
+                setSelectedRoom(room.id);
+              }
+            }}
+            className={`w-full font-semibold py-2 rounded transition-colors mt-4 ${
+              isCompleted ? 'bg-green-600 cursor-not-allowed' :
+              timeUp ? 'bg-red-600 cursor-not-allowed' :
+              !canStartRoom(room.id) ? 'bg-slate-600 cursor-not-allowed' :
+              isActive ? 'bg-cyan-600 hover:bg-cyan-500 text-white' :
+              'bg-cyan-600 hover:bg-cyan-500 text-white'
+            }`}
+            disabled={isCompleted || timeUp || (!isActive && !canStartRoom(room.id))}
+          >
+            {isCompleted ? '✓ Completed' :
+             timeUp ? '⏰ Time Expired' :
+             !canStartRoom(room.id) ? '🔒 Complete Current Room First' :
+             isActive ? 'Continue Room' :
+             'Start Machine'}
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 relative overflow-hidden">
-     <MatrixCanvas />
+      {/* Matrix Rain Background */}
+      <div className="absolute inset-0 opacity-10">
+        {matrixRain.map((drop, i) => (
+          <div
+            key={i}
+            className="absolute text-green-500 text-sm font-mono"
+            style={{ left: drop.x, top: drop.y }}
+          >
+            {drop.char}
+          </div>
+        ))}
+      </div>
 
       {/* Header */}
       <div className="relative z-10 bg-slate-900 border-b border-cyan-500/30 px-6 py-4">
@@ -598,21 +545,9 @@ const CTFChallengePlatform = () => {
           {/* Challenge Rooms */}
           <div className="grid gap-6">
             {rooms.map(room => (
-              <RoomCard 
-                key={room.id} 
-                room={room} 
-                submission={submissions[room.id]}
-                timer={roomTimers[room.id]}
-                formatTime={formatTime}
-                selectedRoom={selectedRoom}
-                setSelectedRoom={setSelectedRoom}
-                handleSubmitFlag={handleSubmitFlag}
-                terminateRoom={terminateRoom}
-                startRoom={startRoom}
-                canStartRoom={canStartRoom}
-              />
-            ))}
-          </div>
+              <RoomCard key={room.id} room={room} />
+            ))}
+          </div>
 
           {/* Progress Summary */}
           <div className="mt-8 bg-slate-800 border border-slate-700 rounded-lg p-6">
