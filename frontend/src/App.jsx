@@ -63,29 +63,29 @@ const CTFChallengePlatform = () => {
     }
   ];
 
-  // // Matrix rain effect
-  // useEffect(() => {
-  //   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()';
-  //   const columns = Math.floor(window.innerWidth / 20);
-  //   const drops = Array(columns).fill(1);
+  // Matrix rain effect
+  useEffect(() => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()';
+    const columns = Math.floor(window.innerWidth / 20);
+    const drops = Array(columns).fill(1);
 
-  //   const interval = setInterval(() => {
-  //     setMatrixRain(drops.map((y, i) => ({
-  //       x: i * 20,
-  //       y: y * 20,
-  //       char: chars[Math.floor(Math.random() * chars.length)]
-  //     })));
+    const interval = setInterval(() => {
+      setMatrixRain(drops.map((y, i) => ({
+        x: i * 20,
+        y: y * 20,
+        char: chars[Math.floor(Math.random() * chars.length)]
+      })));
 
-  //     drops.forEach((y, i) => {
-  //       if (y * 20 > window.innerHeight && Math.random() > 0.975) {
-  //         drops[i] = 0;
-  //       }
-  //       drops[i]++;
-  //     });
-  //   }, 50);
+      drops.forEach((y, i) => {
+        if (y * 20 > window.innerHeight && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      });
+    }, 50);
 
-  //   return () => clearInterval(interval);
-  // }, []);
+    return () => clearInterval(interval);
+  }, []);
 
   // Timer countdown effect
   useEffect(() => {
