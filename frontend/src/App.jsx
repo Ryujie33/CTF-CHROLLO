@@ -357,21 +357,17 @@ const CTFChallengePlatform = () => {
               ))}
             </div>
             
-            <form
-  onSubmit={(e) => {
-    e.preventDefault();
-    const flag = e.target.elements.flag.value.trim();
-    if (flag) handleSubmitFlag(room.id, flag);
-    e.target.reset();
-  }}
->
-  <input
-    name="flag"
-    type="text"
-    placeholder="Enter flag (e.g., CTF{...})"
-    className="w-full bg-slate-900 border border-slate-700 rounded px-4 py-2 text-slate-200 focus:border-cyan-500 focus:outline-none"
-  />
-</form>
+            <input
+              type="text"
+              placeholder="Enter flag (e.g., CTF{...})"
+              className="w-full bg-slate-900 border border-slate-700 rounded px-4 py-2 text-slate-200 focus:border-cyan-500 focus:outline-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                  handleSubmitFlag(room.id, e.target.value);
+                  e.target.value = '';
+                }
+              }}
+            />
 
             {submission && !submission.correct && (
               <div className="flex items-center gap-2 p-3 rounded bg-red-500/20 text-red-400">
