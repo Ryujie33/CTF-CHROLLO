@@ -1,77 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Terminal, Flag, CheckCircle, XCircle, Lock, Server, Wifi, Clock, PlayCircle, StopCircle } from 'lucide-react';
-
-const MatrixCanvas = () => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    let animationFrameId;
-
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()';
-    const fontSize = 16;
-    let columns = 0;
-    let drops = [];
-
-    const setupCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      
-      columns = Math.floor(canvas.width / fontSize);
-      drops = []; // Reset drops array
-      for(let i = 0; i < columns; i++) {
-        drops[i] = 1;
-      }
-    };
-    
-    setupCanvas();
-
-    const draw = () => {
-      // Semi-transparent black background for the fading effect
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = '#0F0'; // Green text
-      ctx.font = `${fontSize}px monospace`;
-
-      for (let i = 0; i < drops.length; i++) {
-        const text = chars[Math.floor(Math.random() * chars.length)];
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-        // Reset drop to top randomly
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-          drops[i] = 0;
-        }
-        drops[i]++;
-      }
-    };
-
-    const animate = () => {
-      draw();
-      animationFrameId = window.requestAnimationFrame(animate);
-    };
-    animate(); // Start the animation
-
-    window.addEventListener('resize', setupCanvas);
-
-    // Cleanup
-    return () => {
-      window.cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', setupCanvas);
-    };
-  }, []); // Empty dependency array ensures this runs only once
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 opacity-10" // Kept your original styling
-    />
-  );
-};
-
 
 const CTFChallengePlatform = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -134,6 +63,29 @@ const CTFChallengePlatform = () => {
     }
   ];
 
+  // // Matrix rain effect
+  // useEffect(() => {
+  //   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()';
+  //   const columns = Math.floor(window.innerWidth / 20);
+  //   const drops = Array(columns).fill(1);
+
+  //   const interval = setInterval(() => {
+  //     setMatrixRain(drops.map((y, i) => ({
+  //       x: i * 20,
+  //       y: y * 20,
+  //       char: chars[Math.floor(Math.random() * chars.length)]
+  //     })));
+
+  //     drops.forEach((y, i) => {
+  //       if (y * 20 > window.innerHeight && Math.random() > 0.975) {
+  //         drops[i] = 0;
+  //       }
+  //       drops[i]++;
+  //     });
+  //   }, 50);
+
+  //   return () => clearInterval(interval);
+  // }, []);
 
   // Timer countdown effect
   useEffect(() => {
@@ -405,17 +357,21 @@ const CTFChallengePlatform = () => {
               ))}
             </div>
             
-            <input
-              type="text"
-              placeholder="Enter flag (e.g., CTF{...})"
-              className="w-full bg-slate-900 border border-slate-700 rounded px-4 py-2 text-slate-200 focus:border-cyan-500 focus:outline-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && e.target.value.trim()) {
-                  handleSubmitFlag(room.id, e.target.value);
-                  e.target.value = '';
-                }
-              }}
-            />
+            <form
+  onSubmit={(e) => {
+    e.preventDefault();
+    const flag = e.target.elements.flag.value.trim();
+    if (flag) handleSubmitFlag(room.id, flag);
+    e.target.reset();
+  }}
+>
+  <input
+    name="flag"
+    type="text"
+    placeholder="Enter flag (e.g., CTF{...})"
+    className="w-full bg-slate-900 border border-slate-700 rounded px-4 py-2 text-slate-200 focus:border-cyan-500 focus:outline-none"
+  />
+</form>
 
             {submission && !submission.correct && (
               <div className="flex items-center gap-2 p-3 rounded bg-red-500/20 text-red-400">
@@ -476,9 +432,18 @@ const CTFChallengePlatform = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 relative overflow-hidden">
-     <MatrixCanvas />
-      {/* Header */}
-      <div className="relative z-10 bg-slate-900 border-b border-cyan-500/30 px-6 py-4"></div>
+      {/* Matrix Rain Background */}
+      <div className="absolute inset-0 opacity-10">
+        {matrixRain.map((drop, i) => (
+          <div
+            key={i}
+            className="absolute text-green-500 text-sm font-mono"
+            style={{ left: drop.x, top: drop.y }}
+          >
+            {drop.char}
+          </div>
+        ))}
+      </div>
 
       {/* Header */}
       <div className="relative z-10 bg-slate-900 border-b border-cyan-500/30 px-6 py-4">
